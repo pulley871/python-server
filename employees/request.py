@@ -1,4 +1,4 @@
-from models import Employee
+from models import Employee, Location
 import sqlite3
 import json
 db_connect = "./kennel.db"
@@ -11,13 +11,18 @@ def get_all_employees():
             a.id,
             a.name,
             a.address,
-            a.location_id
+            a.location_id,
+            l.name location_name,
+            l.address location_address
         FROM employee a
+        JOIN location l
+            ON l.id = a.location_id
         """)
         employees = []
         data = db_cursor.fetchall()
         for row in data:
             employee = Employee(row['id'], row['name'], row['address'], row['location_id'])
+            employee.location = Location(row['id'], row['location_name'], row['location_address']).__dict__
             employees.append(employee.__dict__)
         return json.dumps(employees)
 def get_single_employee(id):
@@ -39,6 +44,25 @@ def get_single_employee(id):
             return json.dumps(employee.__dict__)
         except:
             return "No Employee Found"
+def get_employees_by_location(location_id):
+    with sqlite3.connect(db_connect) as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.address,
+            a.location_id
+        FROM employee a
+        WHERE a.location_id = ?
+        """, (location_id,))
+        employees = []
+        data = db_cursor.fetchall()
+        for row in data:
+            employees.append(Employee(row["id"], row["name"], row["address"], row["location_id"]).__dict__)
+        return json.dumps(employees)
+
 def post_employee(employee):
     max_id = EMPLOYEES[-1]["id"]
     new_id = max_id + 1

@@ -45,7 +45,23 @@ def get_single_customer(id):
             return json.dumps(customer.__dict__)
         except:
             return "No customer found"
+def get_customer_by_email(email):
+    with sqlite3.connect(db_connect) as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
 
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.address,
+            a.email,
+            a.password
+        FROM customer a
+        WHERE a.email = ?
+        """, (email,))
+        data = db_cursor.fetchone()
+        return json.dumps(Customer(data["id"],data["name"],data["address"], data["email"], data["password"]).__dict__)
 def post_customer(customer):
     max_id = CUSTOMERS[-1]["id"]
     new_id = max_id + 1
